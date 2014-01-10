@@ -186,6 +186,7 @@ def parse_args():
                         help="Munin host to query for stats. Default: %(default)s")
     parser.add_argument("--displayname",
                         default=False,
+                        action="store",
                         help="If defined, use this as the name to store metrics in Graphite instead of the Munin hostname.")
     parser.add_argument("--interval",
                         type=int,
