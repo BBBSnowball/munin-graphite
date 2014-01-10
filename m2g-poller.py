@@ -94,7 +94,12 @@ class Munin():
         response = {}
 
         for current_line in self._iterline():
-            key_name, key_value = current_line.split(" ", 1)
+            x = current_line.split(" ", 1)
+            if len(x) == 2:
+                key_name, key_value = x
+            else:
+                key_name = x[0]
+                key_value = ""
             if "." in key_name:
                 # Some keys have periods in them.
                 # If so, make their own nested dictionary.
