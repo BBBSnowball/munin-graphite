@@ -11,7 +11,7 @@ import sys
 import time
 
 LOGGING_FORMAT = "%(asctime)s:%(levelname)s:%(message)s"
-RE_LEFTRIGHT = re.compile(r"^(?P<left>\S+)\s+(?P<right>\S+)$")
+RE_LEFTRIGHT = re.compile(r"^(?P<left>\S+)\s+(?P<right>.+)$")
 
 ## TODO: Catch keyboard interrupt properly and die when requested
 
@@ -80,9 +80,13 @@ class Munin():
         response = {}
         for current_line in self._iterline():
             # Some munin plugins have more than one space between key and value.
-            full_key_name, key_value = RE_LEFTRIGHT.search(current_line).group(1, 2)
-            key_name = full_key_name.split(".")[0]
-            response[key_name] = key_value
+            m = RE_LEFTRIGHT.search(current_line)
+            if m:
+                full_key_name, key_value = m.group(1, 2)
+                key_name = full_key_name.split(".")[0]
+                response[key_name] = key_value
+            else:
+                logging.error("Ignoring this line because I don't understand it: %r" % (current_line,))
 
         return response
 
@@ -157,7 +161,11 @@ class Munin():
                      plugin_name, timestamp)
 
         for data_key in plugin_data:
-            plugin_category = plugin_config["graph_category"]
+            if "graph_category" in plugin_config:
+                plugin_category = plugin_config["graph_category"]
+            else:
+                logging.warning("Category is missing. I will use category 'other'. This is the data: %r" % plugin_config)
+                plugin_category = "other"
             metric = "%s%s.%s.%s.%s" % (prefix, self.displayname, plugin_category, plugin_name, data_key)
             value = plugin_data[data_key]
             logging.debug("Creating metric %s, value: %s", metric, value)
