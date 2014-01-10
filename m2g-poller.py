@@ -49,6 +49,10 @@ class Munin():
         self._conn = self._sock.makefile()
         self.hello_string = self._readline()
 
+        if self.args.use_munin_hostname:
+            if self.hello_string.startswith("# munin node at "):
+                self.displayname = self.hello_string[len("# munin node at "):]
+
     def close_connection(self):
         """Close connection to Munin host."""
         self._sock.close()
@@ -164,7 +168,7 @@ class Munin():
             return
 
         logging.info("Sending plugin %s data to Carbon for host %s.",
-                     plugin_name, self.hostname)
+                     plugin_name, self.displayname)
         payload = pickle.dumps(data_list)
         header = struct.pack("!L", len(payload))
         message = header + payload
@@ -172,7 +176,7 @@ class Munin():
         carbon_sock.sendall(message)
         carbon_sock.close()
         logging.info("Finished sending plugin %s data to Carbon for host %s.",
-                     plugin_name, self.hostname)
+                     plugin_name, self.displayname)
 
 def parse_args():
     """Parse command line arguments."""
@@ -188,6 +192,10 @@ def parse_args():
                         default=False,
                         action="store",
                         help="If defined, use this as the name to store metrics in Graphite instead of the Munin hostname.")
+    parser.add_argument("--use-munin-hostname",
+                        default=True,
+                        action="store_true",
+                        help="Use the host name reported by the Munin node.")
     parser.add_argument("--interval",
                         type=int,
                         default=60,
