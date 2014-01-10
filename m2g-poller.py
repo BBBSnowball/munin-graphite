@@ -31,7 +31,10 @@ class Munin():
         while True:
             self.connect()
             self.process_host_stats()
-            time.sleep(self.args.interval)
+            if self.args.interval > 0:
+                time.sleep(self.args.interval)
+            else:
+                break
 
     def connect(self):
         """Initial connection to Munin host."""
